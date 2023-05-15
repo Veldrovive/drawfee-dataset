@@ -1,3 +1,11 @@
 youtube-dl~=2021.12.17
 webvtt-py~=0.4.6
+
+# torch==1.13.1
+# torchvision==0.14.1
+# torchaudio==0.13.1
+
+# hmmlearn @ git+https://github.com/hmmlearn/hmmlearn@e22127765b0ca70d01976df2a369667756b8445e
+# pyannote.audio==2.1.1
+
 https://github.com/pyannote/pyannote-audio/archive/refs/heads/develop.zip

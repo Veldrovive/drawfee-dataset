@@ -3,6 +3,7 @@ from downloader import download_video_and_subtitle
 from extract_data import read_video_and_subtitle_lang_list
 from pyannote.audio import Pipeline
 import os
+import torch
 
 from pathlib import Path
 
@@ -10,16 +11,26 @@ def get_subtitles(subtitle_path: Path):
     assert subtitle_path.exists()
     return webvtt.read(subtitle_path.as_posix())
 
+def move_to_accelerator(pipeline: Pipeline):
+    if torch.cuda.is_available():
+        pipeline.to("cuda")
+        print("Using CUDA")
+    elif torch.backends.mps.is_available():
+        pipeline.to("mps")
+        print("Using MPS")
+    else:
+        pipeline.to("cpu")
+        print("Using CPU")
+
 def get_speakers(audio_file: Path, min_speakers=2, max_speakers=5, out_file=None):
-    access_token = os.environ.get("HF_ACCESS_TOKEN")
-    pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization@2.1", use_auth_token=access_token)
+    # access_token = os.environ.get("HF_ACCESS_TOKEN")
+    pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization", use_auth_token=True)
+    move_to_accelerator(pipeline)
     def hook(step_name, step_artefact, file, *args, **kwargs):
         print(f"{step_name} - {step_artefact} - {file}", args, kwargs, flush=True)
     diarization = pipeline(audio_file.absolute().as_posix(), min_speakers=min_speakers, max_speakers=max_speakers, hook=hook)
-    if out_file is not None:
-        with out_file.open('w') as f:
-            for turn, _, speaker in diarization.itertracks(yield_label=True):
-                f.write(f"{turn.start}\t{turn.end}\t{speaker}\n")
+    with open(out_file, 'w') as f:
+        diarization.write_rttm(f)
     return diarization
 
 
@@ -30,7 +41,7 @@ if __name__ == "__main__":
     video_file = video_file_dir / './drawfee_videos_with_subs.txt'
     for video_url, sub_lang in read_video_and_subtitle_lang_list(video_file):
         print(f"Downloading {video_url} with {sub_lang} subtitles")
-        file_data = download_video_and_subtitle(video_url, sub_lang, work_folder, audio=True, video=False)
+        file_data = download_video_and_subtitle(video_url, sub_lang, work_folder, audio=True, video=False, dummy=True)
         info = file_data["info"]
         id = info["id"]
         title = info["title"]
@@ -43,5 +54,5 @@ if __name__ == "__main__":
         start_time = subs[0].start
         end_time = subs[-1].end
         print(f"Start time: {start_time} - End time: {end_time}")
-        speakers = get_speakers(audio_path, out_file=work_folder / f"{id}.speakers.txt")
+        speakers = get_speakers(audio_path, out_file=work_folder / f"{id}.speakers.rttm")
         break

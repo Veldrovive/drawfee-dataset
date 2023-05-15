@@ -35,7 +35,7 @@ def get_english_subtitles(video_url):
         print(valid_subtitles)
         return valid_subtitles
     
-def download_video_and_subtitle(video_url, sub_lang='en', output_dir: Path = Path('./downloads'), audio=True, video=True):
+def download_video_and_subtitle(video_url, sub_lang='en', output_dir: Path = Path('./downloads'), audio=True, video=True, dummy=True):
     formats = {
         'mp4': video,
         'bestaudio': audio
@@ -58,10 +58,11 @@ def download_video_and_subtitle(video_url, sub_lang='en', output_dir: Path = Pat
         'outtmpl': (output_dir / '%(format_id)s.%(ext)s').absolute().as_posix(),  # Output filename template
     }
 
-    for file in output_dir.iterdir():
-        file.unlink()
-    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([video_url])
+    if not dummy:
+        for file in output_dir.iterdir():
+            file.unlink()
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([video_url])
 
     ret_val = {
         "video": None,
