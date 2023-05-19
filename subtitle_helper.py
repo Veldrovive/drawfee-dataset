@@ -1,6 +1,6 @@
 import webvtt
-from downloader import download_video_and_subtitle
-from extract_data import read_video_and_subtitle_lang_list
+from .downloader import download_video_and_subtitle
+from .extract_data import read_video_and_subtitle_lang_list
 from pyannote.audio import Pipeline
 import os
 import torch

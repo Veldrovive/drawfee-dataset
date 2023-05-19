@@ -1,4 +1,4 @@
-from downloader import download_video_and_subtitle
+from .downloader import download_video_and_subtitle
 from pathlib import Path
 
 def read_video_and_subtitle_lang_list(url_file: Path):
